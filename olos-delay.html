@@ -1,0 +1,40 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-slider/paper-slider.html">
+<!-- <link rel="import" href="../paper-icon-button/paper-icon-button.html"> -->
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-dropdown/paper-dropdown.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../core-menu/core-menu.html">
+<!-- <link rel="import" href="../font-roboto/roboto.html"> -->
+
+<!--
+Web Audio Delay
+##### Example
+
+
+@element olos-delay
+@blurb 
+@status alpha
+@homepage 
+-->
+<polymer-element name="olos-delay" attributes="inputAudio delayTimeParam output rootfolder">
+  <template>
+    <link rel="stylesheet" href="olos-delay.css"></link>
+
+    <div id="container" width="400px">
+
+      <label>Delay Time</label>
+      <paper-slider pin="true" id="delaytime" min="1" max="2000" immediateValue="{{sliderValue}}" on-immediate-value-change="{{setDelayTime}}" style="width: 70%"></paper-slider>
+      <paper-dropdown-menu id="delaytypedropdown" label="{{delayFactor}}" style="width: 50%">
+          <paper-dropdown class="dropdown">
+              <core-menu selected="seconds" id="selector" on-core-select="{{setDelayType}}" class="menu">
+                  <paper-item label="samples">Samples</paper-item>
+                  <paper-item label="seconds">Seconds</paper-item>
+              </core-menu>
+          </paper-dropdown>
+      </paper-dropdown-menu>
+    </div>
+  </template>
+  <script src="olos-delay.js"type="text/javascript"></script>
+
+</polymer-element>
