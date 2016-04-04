@@ -5,6 +5,7 @@
 <link rel="import" href="../iron-dropdown/iron-dropdown.html">
 <link rel="import" href="../paper-item/paper-item.html">
 <link rel="import" href="../paper-menu/paper-menu.html">
+<link rel="import" href="../paper-input/paper-input.html">
 <!-- <link rel="import" href="../font-roboto/roboto.html"> -->
 
 <!--
@@ -23,15 +24,38 @@ Web Audio Delay
 
     <div id="container" width="400px">
 
-      <label>Delay Time</label>
+      <label>Delay Time: {{_computedDelayTime}} seconds</label>
       <paper-slider pin="true" id="delaytime" min="1" max="2000" immediate-value="{{sliderValue}}" on-immediate-value-change="setDelayTime" style="width: 70%"></paper-slider>
-      <paper-dropdown-menu id="delaytypedropdown" label="Delay Factor" style="width: 50%">
+      <paper-dropdown-menu id="delaytypedropdown" label="Slider Units" style="width: 50%">
               <paper-menu id="selector" selected="{{delayFactor}}" attr-for-selected="label" class="dropdown-content">
                   <paper-item label="samples">Samples</paper-item>
                   <paper-item label="seconds">MilliSeconds</paper-item>
               </paper-menu>
       </paper-dropdown-menu>
+
+      <div>
+        <div center="" horizontal=""><label>Period: </label>"<span>{{_syncedNum}}</span><span>{{_syncedUnit}}</span>" (<label></label>{{computedPeriod}}<span> Seconds)</span></div>
+
+        <div id="tone-sync-freq" center="" horizontal="" layout="">
+            <paper-input on-change="computePeriod" class="single-char" type="number" min="1" max="128" maxlength="3" value="{{_syncedNum}}">
+            </paper-input>
+            <paper-radio-group on-paper-radio-group-changed="computePeriod" role="listbox" tabindex="0" selected="{{_syncedUnit}}">
+              <paper-radio-button name="n">n (note) </paper-radio-button>
+              <paper-radio-button name="t">t (triplet)</paper-radio-button>
+              <paper-radio-button name="m">m (measure)</paper-radio-button>
+            </paper-radio-group>
+        </div>
+        <paper-tooltip for="tone-sync-freq">Sync to Tempo, using Tone.Time. For example "4n" is a quarter-note, "8t" is an eighth-note triplet, and "1m" is one measure.</paper-tooltip>
+      </div>
     </div>
+
+    <!-- sync -->
+    <!-- <div class$="{{modeClass}}"> -->
+
+
+
+    <!-- </div> -->
+
   </template>
   <script type="text/javascript">
     (function (params) {
@@ -82,7 +106,9 @@ Web Audio Delay
           var self = this;
           self._audioContext = audioContext;
           self.inputAudio = audioContext.createGain();
-          self.delay = audioContext.createDelay();
+          // self.delay = audioContext.createDelay();
+          self.delay = new Tone.Delay();
+
           self.delayTimeParam = self.delay.delayTime;
           self._init();
           self.output = audioContext.createGain();
@@ -92,6 +118,13 @@ Web Audio Delay
         _init: function () {
           var self = this;
           self.setDelayTime();
+
+          document.addEventListener('bpm-change', function(e) {
+            // if synced, sync osc freq
+            // if (self.modeClass === 'synced') {
+            self.computePeriod();
+            // }
+          });
         },
         setDelayTime: function (e) {
           var self = this;
@@ -133,7 +166,22 @@ Web Audio Delay
             self.setDelayTime();
           }
         },
-        animate: function () {
+        computePeriod: function() {
+          var self = this;
+          if (!this.delay) return;
+          var timeString = this._syncedNum + this._syncedUnit;
+          this.delay.delayTime.value = timeString;
+
+          var newPeriod = this.delay.toSeconds(timeString);
+          console.log('dTime', this.delay.delayTime.value);
+
+          setTimeout(function() {
+            self.computedPeriod = newPeriod;
+          }, 1);
+        },
+        _draw: function () {
+          if (!this.delay) return;
+          this._computedDelayTime = this.delay.delayTime.value.toFixed(8);
         },
         // TO DO
         // this.sliderValue = 
