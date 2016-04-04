@@ -2,9 +2,9 @@
 <link rel="import" href="../paper-slider/paper-slider.html">
 <!-- <link rel="import" href="../paper-icon-button/paper-icon-button.html"> -->
 <link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
-<link rel="import" href="../paper-dropdown/paper-dropdown.html">
+<link rel="import" href="../iron-dropdown/iron-dropdown.html">
 <link rel="import" href="../paper-item/paper-item.html">
-<link rel="import" href="../core-menu/core-menu.html">
+<link rel="import" href="../paper-menu/paper-menu.html">
 <!-- <link rel="import" href="../font-roboto/roboto.html"> -->
 
 <!--
@@ -17,24 +17,144 @@ Web Audio Delay
 @status alpha
 @homepage 
 -->
-<polymer-element name="olos-delay" attributes="inputAudio delayTimeParam output rootfolder">
+<dom-module id="olos-delay">
+  <link rel="import" type="css" href="olos-delay.css">
   <template>
-    <link rel="stylesheet" href="olos-delay.css"></link>
 
     <div id="container" width="400px">
 
       <label>Delay Time</label>
-      <paper-slider pin="true" id="delaytime" min="1" max="2000" immediateValue="{{sliderValue}}" on-immediate-value-change="{{setDelayTime}}" style="width: 70%"></paper-slider>
-      <paper-dropdown-menu id="delaytypedropdown" label="{{delayFactor}}" style="width: 50%">
-          <paper-dropdown class="dropdown">
-              <core-menu selected="seconds" id="selector" on-core-select="{{setDelayType}}" class="menu">
+      <paper-slider pin="true" id="delaytime" min="1" max="2000" immediate-value="{{sliderValue}}" on-immediate-value-change="setDelayTime" style="width: 70%"></paper-slider>
+      <paper-dropdown-menu id="delaytypedropdown" label="Delay Factor" style="width: 50%">
+              <paper-menu id="selector" selected="{{delayFactor}}" attr-for-selected="label" class="dropdown-content">
                   <paper-item label="samples">Samples</paper-item>
-                  <paper-item label="seconds">Seconds</paper-item>
-              </core-menu>
-          </paper-dropdown>
+                  <paper-item label="seconds">MilliSeconds</paper-item>
+              </paper-menu>
       </paper-dropdown-menu>
     </div>
   </template>
-  <script src="olos-delay.js"type="text/javascript"></script>
-
-</polymer-element>
+  <script type="text/javascript">
+    (function (params) {
+      Polymer({
+        is: 'olos-delay',
+        properties: {
+          delayFactor: {
+            type: String,
+            value: 'samples',
+            observer: 'delayFactorChanged'
+          },
+          delayTimeParam: {
+            value: null,
+            notify: true
+          },
+          height: {
+            type: Number,
+            value: 100
+          },
+          // inputs and outputs
+          inputAudio: {
+            value: null,
+            notify: true
+          },
+          output: {
+            value: null,
+            notify: true
+          },
+          rootfolder: {
+            type: String,
+            value: '../olos-delay/',
+            notify: true
+          },
+          samplesOrMillis: {
+            type: Number,
+            value: 1000
+          },
+          sliderValue: {
+            type: Number,
+            value: 500
+          },
+          width: {
+            type: Number,
+            value: 300
+          }
+        },
+        ready: function () {
+          var self = this;
+          self._audioContext = audioContext;
+          self.inputAudio = audioContext.createGain();
+          self.delay = audioContext.createDelay();
+          self.delayTimeParam = self.delay.delayTime;
+          self._init();
+          self.output = audioContext.createGain();
+          self.inputAudio.connect(self.delay);
+          self.delay.connect(self.output);
+        },
+        _init: function () {
+          var self = this;
+          self.setDelayTime();
+        },
+        setDelayTime: function (e) {
+          var self = this;
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          console.log(self.sliderValue, self.samplesOrMillis);
+          self.delay.delayTime.value = self.sliderValue / self.samplesOrMillis;
+        },
+        // console.log(this.delay.delayTime.value);
+        // setDelayType: function (e) {
+        //   var self = this;
+        //   var detail = e.detail;
+        //   console.log(e);
+        //   if (detail) {
+        //     self.delayFactor = detail.item.innerText.toLowerCase();
+        //   } else {
+        //     console.log('no type');
+        //     self.delayFactor = 'Samples';
+        //     self.$.selector.selected = ['samples'];
+        //   }
+        //   if (self.delayFactor === 'samples') {
+        //     self.samplesOrMillis = 44100;
+        //   } else {
+        //     self.samplesOrMillis = 1000;
+        //   }
+        //   self.setDelayTime();
+        // },
+        delayFactorChanged: function() {
+          var self = this;
+          console.log('df changed');
+          if (self.delayFactor === 'samples') {
+            self.samplesOrMillis = 44100;
+          } else {
+            self.samplesOrMillis = 1000;
+          }
+          if (self.delay) {
+            self.setDelayTime();
+          }
+        },
+        animate: function () {
+        },
+        // TO DO
+        // this.sliderValue = 
+        dispose: function () {
+          var self = this;
+          // remove audio elements
+          var nodes = [
+            'inputAudio',
+            'delay',
+            'output'
+          ];
+          for (var i = 0; i < nodes.length; i++) {
+            try {
+              var node = self[nodes[i]];
+              node.disconnect();
+              node = null;
+            } catch (e) {
+            }
+          }
+        }
+      });
+    }());
+  </script>
+</dom-module>
